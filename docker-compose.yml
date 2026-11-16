@@ -1,0 +1,84 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.14.1
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        PYTHON_EXTRAS: ${PYTHON_EXTRAS:-}
+    environment:
+      TRIALPULSE_RETRIEVAL: ${TRIALPULSE_RETRIEVAL:-demo}
+      TRIALPULSE_QDRANT_URL: http://qdrant:6333
+      TRIALPULSE_COLLECTION: ${TRIALPULSE_COLLECTION:-trialpulse}
+      TRIALPULSE_MODEL_NAME: ${TRIALPULSE_MODEL_NAME:-FremyCompany/BioLORD-2023}
+      TRIALPULSE_ARTIFACT_DIR: /app/artifacts
+      TRIALPULSE_LLM_URL: ${TRIALPULSE_LLM_URL:-}
+      TRIALPULSE_LLM_API_KEY: ${TRIALPULSE_LLM_API_KEY:-}
+      TRIALPULSE_LLM_MODEL: ${TRIALPULSE_LLM_MODEL:-}
+      TRIALPULSE_ENVIRONMENT: ${TRIALPULSE_ENVIRONMENT:-development}
+      TRIALPULSE_LOG_LEVEL: ${TRIALPULSE_LOG_LEVEL:-INFO}
+      TRIALPULSE_ALLOWED_HOSTS: ${TRIALPULSE_ALLOWED_HOSTS:-["*"]}
+      TRIALPULSE_MAX_REQUEST_BYTES: ${TRIALPULSE_MAX_REQUEST_BYTES:-5000000}
+      TRIALPULSE_RATE_LIMIT_PER_MINUTE: ${TRIALPULSE_RATE_LIMIT_PER_MINUTE:-240}
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2g
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./data/local:/app/data/local
+      - model_cache:/home/appuser/.cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      qdrant:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  model_cache:

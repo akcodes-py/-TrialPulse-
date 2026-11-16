@@ -1,0 +1,15 @@
+1 Q0 DEMO-003 1 5 fixture
+1 Q0 DEMO-002 2 4 fixture
+1 Q0 DEMO-001 3 3 fixture
+1 Q0 DEMO-004 4 2 fixture
+1 Q0 DEMO-005 5 1 fixture
+2 Q0 DEMO-001 1 5 fixture
+2 Q0 DEMO-004 2 4 fixture
+2 Q0 DEMO-002 3 3 fixture
+2 Q0 DEMO-003 4 2 fixture
+2 Q0 DEMO-005 5 1 fixture
+3 Q0 DEMO-002 1 5 fixture
+3 Q0 DEMO-003 2 4 fixture
+3 Q0 DEMO-001 3 3 fixture
+3 Q0 DEMO-004 4 2 fixture
+3 Q0 DEMO-005 5 1 fixture
